@@ -225,7 +225,7 @@ Camera:
   far clip plane: 1000
   field of view: 34
   orthographic: 1
-  orthographic size: 1
+  orthographic size: 1.69
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
@@ -387,23 +387,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c7d1bb66a10e0dc4dadce3b966567053, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerController
-  moveSpeed: 5
+  moveSpeed: 3
   spriteUp:
-  - {fileID: -8393169711176511969, guid: f254dd087ea31104b96ef9adc164348c, type: 3}
-  - {fileID: -3009659751897613197, guid: df89a51963e1914499141d6a786188b0, type: 3}
-  - {fileID: -87951857334250037, guid: e61630a4e6743e54882f05707faba33c, type: 3}
+  - {fileID: 8068110221773599553, guid: 4d119b1ce96a7a6498c17407cd671ea9, type: 3}
+  - {fileID: 8985700859885260125, guid: 57770f306738c27499187cabba06f1ef, type: 3}
+  - {fileID: 2716240586309268493, guid: fe7cebe0006ec4042828515989da5ea1, type: 3}
   spriteDown:
-  - {fileID: 7926631094506107384, guid: b55af7b6ade478e43984d536c7a22cf3, type: 3}
-  - {fileID: 1259403999637839662, guid: e6a51cc23e0ea78418a716cfee51ad89, type: 3}
-  - {fileID: 7926631094506107384, guid: b55af7b6ade478e43984d536c7a22cf3, type: 3}
+  - {fileID: -7503995647475179132, guid: 4ab10f8c2210d7b4b82eb309242276e6, type: 3}
+  - {fileID: -60010292845701936, guid: 28f19acb32b17564286d30f3c4d7a50a, type: 3}
+  - {fileID: -6343045580945606073, guid: 3a9a2f672d293ac4bbc1a0ab37a39e59, type: 3}
   spriteLeft:
-  - {fileID: 7827470447151488021, guid: ec0e17fc21f51b345b5177d68eede536, type: 3}
-  - {fileID: -6994915466344122352, guid: 0979b1121f887cc4db263580ffcc40c4, type: 3}
-  - {fileID: -1001214729499911652, guid: 80d4eb65ebae2034c952c4011c876225, type: 3}
+  - {fileID: -4038579135736737017, guid: c1171b967d9d2e34fb0abe998736cc35, type: 3}
+  - {fileID: -996784362272939538, guid: b9a2621c46245b043b26cb3ada4b017b, type: 3}
+  - {fileID: 2127358076149389339, guid: 831a01e3090d0ea4398f2bdcb634ebab, type: 3}
   spriteRight:
-  - {fileID: 5534413525631299974, guid: 3fe893ced4e7a5f46916bb8ba700d088, type: 3}
-  - {fileID: -7489089114631842765, guid: ce57cba6ceb8d42408702b78ed0621a5, type: 3}
-  - {fileID: 2823216415284645959, guid: 58fc97c6190ac4d449ada0cfebac5402, type: 3}
+  - {fileID: -1808200292221044115, guid: 5ceac6d5211c30841b38e0a13ae0d083, type: 3}
+  - {fileID: 8694010455615820480, guid: f662a1bda5c889b48adbf8660ab58750, type: 3}
+  - {fileID: 4945371358737227619, guid: f71ebb85b1f38754fa5d27d3a9d3cfce, type: 3}
   frameTime: 0.15
 --- !u!114 &792811954
 MonoBehaviour:
@@ -511,7 +511,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 15
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 8894105245806051599, guid: cc72d3ca6c8fce640afc3a00a2abe6c4, type: 3}
+  m_Sprite: {fileID: -7503995647475179132, guid: 4ab10f8c2210d7b4b82eb309242276e6, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
