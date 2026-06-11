@@ -1,13 +1,16 @@
 ﻿using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.UI; // ⭐ UI(Text, Image) 제어를 위해 반드시 필요합니다!
+using UnityEngine.UI;
+using TMPro; // ⭐ TextMeshPro 사용을 위해 필수!
+using System.Collections; // ⭐ 기절 코루틴(IEnumerator) 사용을 위해 필수!
 
 public class PlayerController : MonoBehaviour
 {
     // ==========================================
-    // [1] 기존 이동 및 애니메이션 변수 (교수님 코드)
+    // [1] 기존 이동 및 애니메이션 변수
     // ==========================================
-    public float moveSpeed = 5f;
+    [Header("이동 설정")]
+    public float moveSpeed = 8f;
 
     public Sprite[] spriteUp;
     public Sprite[] spriteDown;
@@ -26,21 +29,37 @@ public class PlayerController : MonoBehaviour
     private int frameIndex = 0;
     private float timer = 0f;
 
+    // 플레이어 자체 상태 변수 (스크린샷 내 기절 로직 연동용)
+    private bool isStunned = false;
+
     // ==========================================
-    // [2] 인벤토리 및 무적 시스템 변수 (새로 추가됨)
+    // [2] 인벤토리 시스템 변수
     // ==========================================
     [Header("인벤토리 UI 연결")]
-    public Image[] slotIcons;       // 아이템 이미지 4개
-    public Text[] amountTexts;      // 숫자 텍스트 4개
-    public GameObject[] highlights; // 선택 표시(테두리) 4개
+    public Image[] slotIcons;
+    public TMP_Text[] amountTexts;
+    public GameObject[] highlights;
 
     private string[] itemNames = new string[4];
     private int[] itemCounts = new int[4];
     private int selectedSlot = 0;
 
-    [Header("무적 설정")]
+    // ==========================================
+    // [3] 아이템 효과 관련 변수들
+    // ==========================================
+    [Header("아이템 상태 타이머")]
     public bool isInvincible = false;
     private float invincibleTimer = 0f;
+
+    private bool isSpeedBoosted = false;
+    private float speedBoostTimer = 0f;
+
+    [Header("우측 상단 목표 수집 UI")]
+    public Image goalItemIcon;
+    public TMP_Text goalItemText;
+    public string goalItemName = "Cross";
+    public int targetCount = 5;
+    private int currentCount = 0;
 
     private void Awake()
     {
@@ -48,25 +67,26 @@ public class PlayerController : MonoBehaviour
         sr = GetComponent<SpriteRenderer>();
 
         currentSprites = spriteDown;
-        sr.sprite = currentSprites[0];
+        if (sr != null && currentSprites.Length > 0) sr.sprite = currentSprites[0];
     }
 
     private void Start()
     {
-        // 게임 시작 시 인벤토리 UI를 깔끔하게 비우고 1번 칸을 선택합니다.
         for (int i = 0; i < 4; i++)
         {
             if (slotIcons[i] != null) slotIcons[i].enabled = false;
             if (amountTexts[i] != null) amountTexts[i].enabled = false;
         }
         SelectSlot(0);
+        UpdateGoalUI();
     }
 
     private void Update()
     {
-        // ----------------------------------------
-        // 1. 인벤토리 조작 (가만히 서있을 때도 작동하도록 최상단에 배치)
-        // ----------------------------------------
+        // 기절 상태일 때는 입력 및 타이머 처리를 건너뜁니다.
+        if (isStunned) return;
+
+        // 1. 인벤토리 조작
         if (Keyboard.current != null)
         {
             if (Keyboard.current.digit1Key.wasPressedThisFrame) SelectSlot(0);
@@ -80,26 +100,35 @@ public class PlayerController : MonoBehaviour
             }
         }
 
-        // ----------------------------------------
-        // 2. 무적 시간 카운트다운
-        // ----------------------------------------
+        // 2. [Water] 무적 시간 카운트다운
         if (isInvincible)
         {
             invincibleTimer -= Time.deltaTime;
             if (invincibleTimer <= 0f)
             {
                 isInvincible = false;
-                Debug.Log("무적 상태가 끝났습니다!");
+                Debug.Log("무적(Water) 효과가 종료되었습니다.");
             }
         }
 
-        // ----------------------------------------
-        // 3. 기존 애니메이션 로직
-        // ----------------------------------------
+        // 3. [Butterfly] 스피드업 시간 카운트다운
+        if (isSpeedBoosted)
+        {
+            speedBoostTimer -= Time.deltaTime;
+            if (speedBoostTimer <= 0f)
+            {
+                isSpeedBoosted = false;
+                moveSpeed = 8f;
+                velocity = input.normalized * moveSpeed;
+                Debug.Log("스피드업(Butterfly) 효과가 종료되었습니다.");
+            }
+        }
+
+        // 4. 기존 애니메이션 로직
         if (input.sqrMagnitude <= 0.01f)
         {
             frameIndex = 0;
-            sr.sprite = currentSprites[frameIndex];
+            if (sr != null && currentSprites.Length > 0) sr.sprite = currentSprites[frameIndex];
             return;
         }
 
@@ -115,17 +144,20 @@ public class PlayerController : MonoBehaviour
                 frameIndex = 0;
             }
 
-            sr.sprite = currentSprites[frameIndex];
+            if (sr != null) sr.sprite = currentSprites[frameIndex];
         }
     }
 
     private void FixedUpdate()
     {
-        rb.MovePosition(rb.position + velocity * Time.fixedDeltaTime);
+        if (isStunned) return;
+        if (rb != null) rb.MovePosition(rb.position + velocity * Time.fixedDeltaTime);
     }
 
     public void OnMove(InputValue value)
     {
+        if (isStunned) return;
+
         input = value.Get<Vector2>();
         velocity = input.normalized * moveSpeed;
 
@@ -151,14 +183,9 @@ public class PlayerController : MonoBehaviour
         currentSprites = newSprites;
         frameIndex = 0;
         timer = 0f;
-        sr.sprite = currentSprites[frameIndex];
+        if (sr != null) sr.sprite = currentSprites[frameIndex];
     }
 
-    // ==========================================
-    // [3] 인벤토리 기능 메서드 (새로 추가됨)
-    // ==========================================
-
-    // 슬롯 선택 시 테두리 UI 켜기
     private void SelectSlot(int index)
     {
         selectedSlot = index;
@@ -171,10 +198,16 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    // 아이템 획득 (ItemPickup 스크립트에서 호출됨)
     public void AddItem(string newItemName, Sprite newIcon)
     {
-        // 1. 이미 똑같은 아이템이 있는지 검사
+        if (newItemName == goalItemName)
+        {
+            currentCount++;
+            UpdateGoalUI();
+            return;
+        }
+
+        // 1. 중복 아이템 개수 추가
         for (int i = 0; i < 4; i++)
         {
             if (itemNames[i] == newItemName)
@@ -185,46 +218,71 @@ public class PlayerController : MonoBehaviour
             }
         }
 
-        // 2. 새 아이템이면 빈칸에 넣기
+        // 2. 새 아이템 등록
         for (int i = 0; i < 4; i++)
         {
             if (string.IsNullOrEmpty(itemNames[i]))
             {
                 itemNames[i] = newItemName;
                 itemCounts[i] = 1;
-                slotIcons[i].sprite = newIcon;
-                slotIcons[i].enabled = true;
+                if (slotIcons[i] != null)
+                {
+                    slotIcons[i].sprite = newIcon;
+                    slotIcons[i].enabled = true;
+                }
                 UpdateUI();
                 return;
             }
         }
-        Debug.Log("인벤토리가 꽉 찼습니다!");
     }
 
-    // 아이템 사용 로직
     private void UseItem()
     {
         if (itemCounts[selectedSlot] > 0)
         {
-            if (itemNames[selectedSlot] == "성당")
+            string currentItem = itemNames[selectedSlot];
+
+            if (currentItem == "Water")
             {
                 isInvincible = true;
-                invincibleTimer = 5f;
-                Debug.Log("5초 동안 무적입니다!");
+                invincibleTimer = 10f;
+                Debug.Log("Water 사용: 10초 동안 무적 상태입니다!");
+            }
+            else if (currentItem == "Head")
+            {
+                StunAllEnemies(10f);
+                Debug.Log("Head 사용: 10초 동안 모든 적이 얼어붙습니다!");
+            }
+            else if (currentItem == "Butterfly")
+            {
+                isSpeedBoosted = true;
+                speedBoostTimer = 10f;
+                moveSpeed = 11f;
+                velocity = input.normalized * moveSpeed;
+                Debug.Log("Butterfly 사용: 10초 동안 이동 속도가 11로 증가합니다!");
             }
 
-            itemCounts[selectedSlot]--; // 개수 차감
-
+            itemCounts[selectedSlot]--;
             if (itemCounts[selectedSlot] <= 0)
             {
                 itemNames[selectedSlot] = "";
-                slotIcons[selectedSlot].enabled = false;
+                if (slotIcons[selectedSlot] != null) slotIcons[selectedSlot].enabled = false;
             }
+
             UpdateUI();
         }
     }
 
-    // 화면의 숫자 텍스트 갱신
+    private void StunAllEnemies(float duration)
+    {
+        GameObject[] enemies = GameObject.FindGameObjectsWithTag("Enemy");
+
+        foreach (GameObject enemy in enemies)
+        {
+            enemy.SendMessage("Stun", duration, SendMessageOptions.DontRequireReceiver);
+        }
+    }
+
     private void UpdateUI()
     {
         for (int i = 0; i < 4; i++)
@@ -242,5 +300,62 @@ public class PlayerController : MonoBehaviour
                 }
             }
         }
+    }
+
+    private void UpdateGoalUI()
+    {
+        if (goalItemText != null)
+        {
+            int remaining = targetCount - currentCount;
+            if (remaining < 0) remaining = 0;
+
+            goalItemText.text = remaining.ToString();
+
+            if (remaining == 0)
+            {
+                goalItemText.text = "탈출 가능!";
+                Debug.Log("모든 십자가를 모았습니다. 탈출구로 가세요!");
+            }
+        }
+    }
+
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        if (collision.CompareTag("Cross") || collision.CompareTag("Water") ||
+            collision.CompareTag("Head") || collision.CompareTag("Butterfly"))
+        {
+            string itemName = collision.tag;
+            SpriteRenderer itemSr = collision.GetComponent<SpriteRenderer>();
+            Sprite itemIcon = itemSr != null ? itemSr.sprite : null;
+
+            AddItem(itemName, itemIcon);
+            Destroy(collision.gameObject);
+        }
+    }
+
+    // ==========================================
+    // 💥 플레이어 기절/밀림 제어용 코루틴 함수 (경고 수정 완료)
+    // ==========================================
+    public IEnumerator StunPlayer(float duration)
+    {
+        isStunned = true;
+        Color originalColor = Color.white;
+        if (sr != null) originalColor = sr.color;
+
+        // [물리 제어] 최신 버전 문법인 linearVelocity를 사용하여 경고를 해결했습니다.
+        if (rb != null)
+        {
+            rb.linearVelocity = Vector2.zero;
+        }
+
+        // 지정된 시간 동안 이 상태로 대기합니다.
+        yield return new WaitForSeconds(duration);
+
+        // [원상 복구] 시간이 지나면 원래 색상과 상태로 돌려놓습니다.
+        if (sr != null)
+        {
+            sr.color = originalColor;
+        }
+        isStunned = false;
     }
 }
