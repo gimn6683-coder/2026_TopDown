@@ -325,8 +325,21 @@ public class PlayerController : MonoBehaviour
             collision.CompareTag("Head") || collision.CompareTag("Butterfly"))
         {
             string itemName = collision.tag;
+
+            // ⭐ [수정된 부분] 자식 오브젝트까지 뒤져서 이미지를 찾아옵니다!
             SpriteRenderer itemSr = collision.GetComponent<SpriteRenderer>();
+            if (itemSr == null)
+            {
+                itemSr = collision.GetComponentInChildren<SpriteRenderer>();
+            }
+
             Sprite itemIcon = itemSr != null ? itemSr.sprite : null;
+
+            // ⭐ [디버그 추가] 만약 이미지를 못 찾았다면 유니티 콘솔창에 경고를 띄워줍니다.
+            if (itemIcon == null)
+            {
+                Debug.LogWarning($"[{itemName}] 아이템의 이미지를 찾을 수 없습니다! 해당 아이템 프리팹에 SpriteRenderer가 있는지 확인해주세요.");
+            }
 
             AddItem(itemName, itemIcon);
             Destroy(collision.gameObject);
@@ -334,7 +347,7 @@ public class PlayerController : MonoBehaviour
     }
 
     // ==========================================
-    // 💥 플레이어 기절/밀림 제어용 코루틴 함수 (경고 수정 완료)
+    // 💥 플레이어 기절/밀림 제어용 코루틴 함수
     // ==========================================
     public IEnumerator StunPlayer(float duration)
     {
@@ -342,16 +355,13 @@ public class PlayerController : MonoBehaviour
         Color originalColor = Color.white;
         if (sr != null) originalColor = sr.color;
 
-        // [물리 제어] 최신 버전 문법인 linearVelocity를 사용하여 경고를 해결했습니다.
         if (rb != null)
         {
             rb.linearVelocity = Vector2.zero;
         }
 
-        // 지정된 시간 동안 이 상태로 대기합니다.
         yield return new WaitForSeconds(duration);
 
-        // [원상 복구] 시간이 지나면 원래 색상과 상태로 돌려놓습니다.
         if (sr != null)
         {
             sr.color = originalColor;

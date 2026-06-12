@@ -53,7 +53,10 @@ public class EnemyManager : MonoBehaviour
         // 적 프리팹을 맵에 생성
         currentEnemy = Instantiate(enemyPrefab, spawnPosition, Quaternion.identity);
 
-        // ⭐ 생성된 적에게 아래에 있는 EnemyBehavior 컴포넌트를 코드로 자동 추가합니다!
+        // ⭐ [수정 핵심 1] 생성된 적이 기절(Head) 아이템에 반응할 수 있도록 "Enemy" 태그를 달아줍니다.
+        currentEnemy.tag = "Enemy";
+
+        // 생성된 적에게 아래에 있는 EnemyBehavior 컴포넌트를 코드로 자동 추가합니다!
         if (currentEnemy.GetComponent<EnemyBehavior>() == null)
         {
             currentEnemy.AddComponent<EnemyBehavior>();
@@ -107,6 +110,15 @@ public class EnemyBehavior : MonoBehaviour
 
         if (collision.gameObject.CompareTag("Player"))
         {
+            // ⭐ [수정 핵심 2] 플레이어 스크립트를 확인해서, 무적(Water) 아이템 사용 중인지 검사합니다.
+            PlayerController playerScript = collision.gameObject.GetComponent<PlayerController>();
+
+            if (playerScript != null && playerScript.isInvincible)
+            {
+                Debug.Log("플레이어가 무적(Water) 상태입니다! 적의 공격을 무시합니다.");
+                return; // 무적 상태라면 게임오버를 시키지 않고 통과시킵니다.
+            }
+
             Debug.Log("적과 부딪힘! 처음부터 다시 시작합니다.");
             SceneManager.LoadScene(SceneManager.GetActiveScene().name);
         }
@@ -140,7 +152,7 @@ public class EnemyBehavior : MonoBehaviour
             sr.color = new Color(0.4f, 0.75f, 1f); // 얼음 같은 하늘색
         }
 
-        // ⭐ [물리 제어] 최신 유니티 문법에 맞춰 rb.linearVelocity로 수정 완료!
+        // [물리 제어] 최신 유니티 문법에 맞춰 rb.linearVelocity로 수정 완료!
         Rigidbody2D rb = GetComponent<Rigidbody2D>();
         if (rb != null)
         {
